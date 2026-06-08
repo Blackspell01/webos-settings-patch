@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Settings Patch</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0d0d0d; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; }
+.card { background: #1a1a1a; border-radius: 16px; padding: 60px 80px; width: 700px; }
+h1 { font-size: 32px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; color: #aaa; margin-bottom: 48px; text-align: center; }
+.row { display: flex; align-items: center; justify-content: space-between; background: #111; border-radius: 12px; padding: 28px 32px; margin-bottom: 20px; cursor: pointer; border: 3px solid transparent; transition: border-color 0.15s; }
+.row:focus { outline: none; border-color: #fff; }
+.row-label { font-size: 20px; letter-spacing: 1px; text-transform: uppercase; color: #aaa; }
+.row-status { font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; flex: 1; text-align: right; margin-right: 20px; color: #555; }
+.row-status.on { color: #4caf50; }
+.row-status.off { color: #f44336; }
+.toggle { width: 64px; height: 34px; background: #333; border-radius: 17px; position: relative; transition: background 0.2s; flex-shrink: 0; }
+.toggle.on { background: #4caf50; }
+.toggle::after { content: ''; position: absolute; width: 26px; height: 26px; background: #fff; border-radius: 50%; top: 4px; left: 4px; transition: left 0.2s; }
+.toggle.on::after { left: 34px; }
+.msg { font-size: 16px; color: #888; min-height: 22px; margin-top: 20px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Settings Patch</h1>
+  <div class="row" id="row-patch" tabindex="0"><span class="row-label">Patch</span><span class="row-status" id="status-patch">…</span><div class="toggle" id="toggle-patch"></div></div>
+  <div class="row" id="row-auto" tabindex="0"><span class="row-label">Autostart</span><span class="row-status" id="status-auto">…</span><div class="toggle" id="toggle-auto"></div></div>
+  <div class="msg" id="msg"></div>
+</div>
+<script>
+var PATCHED  = '/media/developer/apps/usr/palm/services/org.webosbrew.settingspatch.service/valid-settings-allow-all.js';
+var ORIGINAL = '/usr/palm/services/com.webos.service.apiadapter/adapters/settings/valid-settings.js';
+var INIT_LINK = '/var/lib/webosbrew/init.d/50-webos-settings-patch';
+var AUTOSTART = '/media/developer/apps/usr/palm/services/org.webosbrew.settingspatch.service/autostart.sh';
+var _bs = [];
+
+var ROWS = [
+  { id: 'patch', state: false,
+    check: 'mount | grep -q "' + ORIGINAL + '" && echo y || echo n',
+    on:  'mount --bind "' + PATCHED + '" "' + ORIGINAL + '" && killall ss.apiadapter',
+    off: 'umount "' + ORIGINAL + '"; killall ss.apiadapter' },
+  { id: 'auto', state: false,
+    check: 'test -L "' + INIT_LINK + '" && echo y || echo n',
+    on:  'chmod +x "' + AUTOSTART + '" && ln -sf "' + AUTOSTART + '" "' + INIT_LINK + '"',
+    off: 'rm -f "' + INIT_LINK + '"' }
+];
+
+function exec(cmd, cb) {
+  var b = new PalmServiceBridge();
+  _bs.push(b);
+  b.onservicecallback = function(msg) {
+    _bs.splice(_bs.indexOf(b), 1);
+    try { var d = JSON.parse(msg); if (cb) cb(d.returnValue ? d : null); } catch(e) {}
+  };
+  b.call('luna://org.webosbrew.hbchannel.service/exec', JSON.stringify({command: cmd}));
+}
+
+function setState(r, state) {
+  r.state = state;
+  document.getElementById('toggle-' + r.id).className = 'toggle ' + (state ? 'on' : '');
+  var s = document.getElementById('status-' + r.id);
+  s.textContent = state ? 'ACTIVE' : 'INACTIVE';
+  s.className = 'row-status ' + (state ? 'on' : 'off');
+}
+
+function refresh() {
+  ROWS.forEach(function(r) {
+    exec(r.check, function(res) { setState(r, res && res.stdoutString[0] === 'y'); });
+  });
+}
+
+function toggle(r) {
+  document.getElementById('msg').textContent = r.state ? 'Disabling…' : 'Enabling…';
+  exec(r.state ? r.off : r.on, function() { document.getElementById('msg').textContent = ''; refresh(); });
+}
+
+ROWS.forEach(function(r) {
+  document.getElementById('row-' + r.id).addEventListener('click', function() { toggle(r); });
+});
+
+document.addEventListener('keydown', function(e) {
+  var idx = ROWS.findIndex(function(r) { return document.activeElement && document.activeElement.id === 'row-' + r.id; });
+  if (e.keyCode === 38 || e.keyCode === 40) { document.getElementById('row-' + ROWS[(idx + 1) % 2].id).focus(); e.preventDefault(); }
+  if (e.keyCode === 13 && idx >= 0) toggle(ROWS[idx]);
+});
+
+document.getElementById('row-patch').focus();
+refresh();
+</script>
+</body>
+</html>

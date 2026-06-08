@@ -1,0 +1,10 @@
+{
+  "id": "org.webosbrew.settingspatch",
+  "version": "1.0.0",
+  "type": "web",
+  "title": "Settings Patch",
+  "vendor": "",
+  "icon": "icon.png",
+  "main": "index.html",
+  "services": [{"name": "org.webosbrew.settingspatch.service"}]
+}

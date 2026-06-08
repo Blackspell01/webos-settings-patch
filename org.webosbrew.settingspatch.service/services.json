@@ -1,0 +1,10 @@
+{
+  "id": "org.webosbrew.settingspatch.service",
+  "description": "Settings Patch Service",
+  "services": [
+    {
+      "name": "org.webosbrew.settingspatch.service",
+      "description": "Settings Patch Service"
+    }
+  ]
+}
