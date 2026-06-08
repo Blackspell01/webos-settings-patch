@@ -1,0 +1,28 @@
+{
+  "paging": {
+    "page": 1,
+    "count": 1,
+    "maxPage": 1,
+    "itemsTotal": 1
+  },
+  "packages": [
+    {
+      "id": "org.webosbrew.settingspatch",
+      "title": "Settings Patch",
+      "iconUri": "https://raw.githubusercontent.com/Blackspell01/webos-settings-patch/main/app/icon.png",
+      "manifest": {
+        "id": "org.webosbrew.settingspatch",
+        "version": "1.0.0",
+        "type": "web",
+        "title": "Settings Patch",
+        "iconUri": "https://raw.githubusercontent.com/Blackspell01/webos-settings-patch/main/app/icon.png",
+        "sourceUrl": "https://github.com/Blackspell01/webos-settings-patch",
+        "rootRequired": true,
+        "ipkUrl": "https://github.com/Blackspell01/webos-settings-patch/releases/download/1.0.0/org.webosbrew.settingspatch_1.0.0_all.ipk",
+        "ipkHash": {
+          "sha256": "ca6a8d6444ee9103b5bd05cb5e8af74fdc61bdca86b6d25a619d7ea34671e8cd"
+        }
+      }
+    }
+  ]
+}
